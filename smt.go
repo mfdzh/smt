@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"errors"
 	"hash"
-	"fmt"
 )
 
 const (
@@ -459,89 +458,6 @@ func (smt *SparseMerkleTree) GetFromPath(root []byte, path []byte) ([]byte, erro
 	}
 	return value, nil
 }
-
-func (smt *SparseMerkleTree) PrintSMT(root []byte) (uint64, error) {
-	fmt.Println("############################################")
-	fmt.Printf("begin at root[%x]\n", root)
-	var current, next [][]byte
-	currentData, err := smt.nodes.Get(root)
-	if err != nil {
-		return 0, err
-	}
-
-	var level = 1
-	fmt.Printf("--level-%d  ", level)
-	if smt.th.isLeaf(currentData) {
-		_, valueHash := smt.th.parseLeaf(currentData)
-		value, _ := smt.values.Get(valueHash)
-		fmt.Printf("(%s(leaf))\n", string(value))
-		// fmt.Printf("have leaf:1,  node:0\n")
-	} else {
-		fmt.Println("")
-		// fmt.Printf("have leaf:0,  node:1\n")
-		current = append(current, currentData)
-	}
-
-	// var total_read uint64
-	// var total_leaf uint64
-	// var total_node uint64 = 1
-	for len(current) > 0 {
-		level++
-		// var leaf uint64 = 0
-		// var node uint64 = 0
-		fmt.Printf("--level-%d  ", level)
-		for _, data := range current {
-			left, right := smt.th.parseNode(data)
-			if !bytes.Equal(left, smt.th.placeholder()) {
-				leftData, err := smt.nodes.Get(left)
-				if err != nil {
-					continue
-				}
-				if smt.th.isLeaf(leftData) {
-					path, _ := smt.th.parseLeaf(leftData)
-					value, _ := smt.GetFromPath(root, path)
-					fmt.Printf("(%s(leaf), ", string(value))
-					// leaf++
-				} else {
-					next = append(next, leftData)
-					fmt.Printf("(%x(left), ", left)
-					// node++
-				}
-			} else {
-				fmt.Printf("(nil(left), ")
-			}
-			if !bytes.Equal(right, smt.th.placeholder()) {
-				rightData, err := smt.nodes.Get(right)
-				if err != nil {
-					continue
-				}
-				if smt.th.isLeaf(rightData) {
-					path, _ := smt.th.parseLeaf(rightData)
-					value, _ := smt.GetFromPath(root, path)
-					fmt.Printf("%s(leaf))  ", string(value))
-					// leaf++
-				} else {
-					next = append(next, rightData)
-					fmt.Printf("%x(right))  ", right)
-					// node++
-				}
-			} else {
-				fmt.Printf("nil(right))  ")
-			}
-		}
-		current = next
-		next = nil
-		fmt.Println("")
-		// fmt.Printf("have leaf:%d,  node:%d\n", leaf, node)
-		// total_read += leaf * uint64(level)
-		// total_leaf += leaf
-		// total_node += node
-	}
-	// fmt.Printf("toatl leaf:%d,  total node:%d,  avege read:%.4f\n", total_leaf, total_node, float64(total_read) / float64(total_leaf))
-	// return total_leaf + total_node, nil
-	return 0, nil
-}
-
 
 // Prove generates a Merkle proof for a key against the current root.
 //
