@@ -450,7 +450,10 @@ func (smt *SparseMerkleTree) GetFromPath(root []byte, path []byte) ([]byte, erro
 		return defaultValue, nil
 	}
 
-	_, valueHash := smt.th.parseLeaf(leafData)
+	keyHash, valueHash := smt.th.parseLeaf(leafData)
+	if !bytes.Equal(keyHash, path) {
+		return defaultValue, nil
+	}
 
 	value, err := smt.values.Get(valueHash)
 	if err != nil {
